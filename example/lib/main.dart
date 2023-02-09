@@ -61,11 +61,12 @@ class MyHomePage extends StatelessWidget {
                     ),
                     children: [
                       const Text('Select Date'),
-                      DatePickerWidget(
+                      DateTimePickerWidget(
                         onChange: (date, test) {
                           print(test);
                           currentDate = date;
                         },
+                        // dateFormat: 'HH-mm',
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, currentDate),
@@ -125,7 +126,7 @@ class _WidgetPageState extends State<WidgetPage> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
-                  child: DatePickerWidget(
+                  child: DateTimePickerWidget(
                     looping: false, // default is not looping
                     firstDate: DateTime.now(), //DateTime(1960),
                     //  lastDate: DateTime(2002, 1, 1),

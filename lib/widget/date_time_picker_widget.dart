@@ -13,8 +13,8 @@ import '../i18n/date_picker_i18n.dart';
 const List<int> _solarMonthsOf31Days = const <int>[1, 3, 5, 7, 8, 10, 12];
 
 /// DatePicker widget.
-class DatePickerWidget extends StatefulWidget {
-  DatePickerWidget({
+class DateTimePickerWidget extends StatefulWidget {
+  DateTimePickerWidget({
     Key? key,
     this.firstDate,
     this.lastDate,
@@ -47,21 +47,27 @@ class DatePickerWidget extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() =>
-      _DatePickerWidgetState(this.firstDate, this.lastDate, this.initialDate);
+      _DateTimePickerWidgetState(this.firstDate, this.lastDate, this.initialDate);
 }
 
-class _DatePickerWidgetState extends State<DatePickerWidget> {
+class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   late DateTime _minDateTime;
   late DateTime _maxDateTime;
   int? _currYear;
   int? _currMonth;
   int? _currDay;
+  int? _currHour;
+  int? _currMinute;
   List<int>? _yearRange;
   List<int>? _monthRange;
   List<int>? _dayRange;
+  List<int>? _hourRange;
+  List<int>? _minuteRange;
   FixedExtentScrollController? _yearScrollCtrl;
   FixedExtentScrollController? _monthScrollCtrl;
   FixedExtentScrollController? _dayScrollCtrl;
+  FixedExtentScrollController? _hourScrollCtrl;
+  FixedExtentScrollController? _minuteScrollCtrl;
 
   late Map<String, FixedExtentScrollController?> _scrollCtrlMap;
   late Map<String, List<int>?> _valueRangeMap;
@@ -71,7 +77,7 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
   // So _lock make sure that month doesn't change from cupertino widget
   // we will handle it manually
   bool _lock = false;
-  _DatePickerWidgetState(
+  _DateTimePickerWidgetState(
     DateTime? minDateTime,
     DateTime? maxDateTime,
     DateTime? initialDateTime,
@@ -81,6 +87,8 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     this._currYear = initDateTime.year;
     this._currMonth = initDateTime.month;
     this._currDay = initDateTime.day;
+    this._currHour = initDateTime.hour;
+    this._currMinute = initDateTime.minute;
 
     // handle DateTime range
     this._minDateTime = minDateTime ?? DateTime.parse(DATE_PICKER_MIN_DATETIME);
@@ -98,6 +106,12 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     this._dayRange = _calcDayRange();
     this._currDay = min(max(_dayRange!.first, _currDay!), _dayRange!.last);
 
+    // limit the range of hour
+    this._hourRange = [0, 24];
+
+    // limit the range of minute
+    this._minuteRange = [0, 60];
+
     // create scroll controller
     _yearScrollCtrl = FixedExtentScrollController(
       initialItem: _currYear! - _yearRange!.first,
@@ -105,15 +119,30 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     _monthScrollCtrl = FixedExtentScrollController(
       initialItem: _currMonth! - _monthRange!.first,
     );
-    _dayScrollCtrl =
-        FixedExtentScrollController(initialItem: _currDay! - _dayRange!.first);
+    _dayScrollCtrl = FixedExtentScrollController(
+      initialItem: _currDay! - _dayRange!.first,
+    );
+    _hourScrollCtrl = FixedExtentScrollController(
+      initialItem: _currHour! - _hourRange!.first,
+    );
+    _minuteScrollCtrl = FixedExtentScrollController(
+      initialItem: _currMinute! - _minuteRange!.first,
+    );
 
     _scrollCtrlMap = {
       'y': _yearScrollCtrl,
       'M': _monthScrollCtrl,
-      'd': _dayScrollCtrl
+      'd': _dayScrollCtrl,
+      'H': _hourScrollCtrl,
+      'm': _minuteScrollCtrl
     };
-    _valueRangeMap = {'y': _yearRange, 'M': _monthRange, 'd': _dayRange};
+    _valueRangeMap = {
+      'y': _yearRange,
+      'M': _monthRange,
+      'd': _dayRange,
+      'H': _hourRange,
+      'm': _minuteRange
+    };
   }
 
   @override
@@ -150,7 +179,8 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
   /// notify selected date changed
   void _onSelectedChange() {
     if (widget.onChange != null) {
-      final dateTime = DateTime(_currYear!, _currMonth!, _currDay!);
+      final dateTime = DateTime(
+          _currYear!, _currMonth!, _currDay!, _currHour!, _currMinute!);
       widget.onChange!(dateTime, _calcSelectIndexList());
     }
   }
@@ -200,6 +230,10 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
             _changeMonthSelection(value);
           } else if (format.contains('d')) {
             _changeDaySelection(value);
+          } else if (format.contains('H')) {
+            _changeHourSelection(value);
+          } else if (format.contains('m')) {
+            _changeMinuteSelection(value);
           }
         },
         fontSize: widget.pickerTheme!.itemTextStyle.fontSize ??
@@ -365,6 +399,32 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     }
   }
 
+  /// change the selection of day picker
+  void _changeHourSelection(int index) {
+    if (_isChangeDateRange) {
+      return;
+    }
+
+    final hour = _hourRange!.first + index;
+    if (_currHour != hour) {
+      _currHour = hour;
+      _onSelectedChange();
+    }
+  }
+
+  /// change the selection of day picker
+  void _changeMinuteSelection(int index) {
+    if (_isChangeDateRange) {
+      return;
+    }
+
+    final minute = _minuteRange!.first + index;
+    if (_currMinute != minute) {
+      _currMinute = minute;
+      _onSelectedChange();
+    }
+  }
+
   // get the correct month
   int? _calcCurrentMonth() {
     int? _currMonth = this._currMonth!;
@@ -452,7 +512,9 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     final yearIndex = _currYear! - _minDateTime.year;
     final monthIndex = _currMonth! - _monthRange!.first;
     final dayIndex = _currDay! - _dayRange!.first;
-    return [yearIndex, monthIndex, dayIndex];
+    final hourIndex = _currHour! - _hourRange!.first;
+    final minuteIndex = _currMinute! - _minuteRange!.first;
+    return [yearIndex, monthIndex, dayIndex, hourIndex, minuteIndex];
   }
 
   /// calculate the range of year

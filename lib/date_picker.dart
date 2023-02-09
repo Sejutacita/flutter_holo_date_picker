@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'date_picker_constants.dart';
 import 'date_picker_theme.dart';
 import 'i18n/date_picker_i18n.dart';
-import 'widget/date_picker_widget.dart';
+import 'widget/date_time_picker_widget.dart';
 
 enum DateTimePickerMode {
   /// Display DatePicker
@@ -174,7 +174,7 @@ class DatePicker {
       backgroundColor: backgroundColor,
       content: Container(
         width: 300,
-        child: DatePickerWidget(
+        child: DateTimePickerWidget(
           firstDate: firstDate,
           lastDate: lastDate,
           initialDate: initialDate,
@@ -282,7 +282,7 @@ class _DatePickerComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pickerWidget = DatePickerWidget(
+    final pickerWidget = DateTimePickerWidget(
       firstDate: route.minDateTime,
       lastDate: route.maxDateTime,
       initialDate: route.initialDateTime,
