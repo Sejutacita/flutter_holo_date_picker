@@ -128,10 +128,11 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         ? [_minDateTime.hour, 23]
         : [0, 23];
 
+    this._currHour = min(max(_minDateTime.hour, _currHour!), 23);
+
     // limit the range of minute
     this._minuteRange = _calcMinutesRange();
 
-    this._currHour = min(max(_minDateTime.hour, _currHour!), 23);
     this._currMinute = _calcCurrentMinute();
 
     // create scroll controller
