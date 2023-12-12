@@ -85,15 +85,20 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
 
   bool _isChangeDateRange = false;
   // whene change year the returned month is incorrect with the shown one
-  // So _lock make sure that month doesn't change from cupertino widget
+  // So locks make sure that month doesn't change from cupertino widget
   // we will handle it manually
-  bool _lock = false;
+  bool _monthLock = false;
+  bool _minuteLock = false;
+
+  bool isLimitHourAndMinuteSelectionBasedOnFirstDate = false;
   _DateTimePickerWidgetState(
     DateTime? minDateTime,
     DateTime? maxDateTime,
     DateTime? initialDateTime,
     bool isLimitHourAndMinuteSelectionBasedOnFirstDate,
   ) {
+    this.isLimitHourAndMinuteSelectionBasedOnFirstDate =
+        isLimitHourAndMinuteSelectionBasedOnFirstDate;
     // handle current selected year、month、day
     final initDateTime = initialDateTime ?? DateTime.now();
     this._currYear = initDateTime.year;
@@ -124,9 +129,10 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         : [0, 23];
 
     // limit the range of minute
-    this._minuteRange = isLimitHourAndMinuteSelectionBasedOnFirstDate
-        ? [_minDateTime.minute, 59]
-        : [0, 59];
+    this._minuteRange = _calcMinutesRange();
+
+    this._currHour = min(max(_minDateTime.hour, _currHour!), 23);
+    this._currMinute = _calcCurrentMinute();
 
     // create scroll controller
     _yearScrollCtrl = FixedExtentScrollController(
@@ -235,20 +241,26 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         format: format,
         valueChanged: (value) {
           if (format.contains('y')) {
-            _lock = true;
+            _monthLock = true;
             _changeYearSelection(value);
-            _lock = false;
+            _monthLock = false;
           } else if (format.contains('M')) {
-            if (_lock) {
-              _lock = false;
+            if (_monthLock) {
+              _monthLock = false;
               return;
             }
             _changeMonthSelection(value);
           } else if (format.contains('d')) {
             _changeDaySelection(value);
           } else if (format.contains('H')) {
+            _minuteLock = true;
             _changeHourSelection(value);
+            _minuteLock = false;
           } else if (format.contains('m')) {
+            if (_minuteLock) {
+              _minuteLock = false;
+              return;
+            }
             _changeMinuteSelection(value);
           }
         },
@@ -424,6 +436,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     final hour = _hourRange!.first + index;
     if (_currHour != hour) {
       _currHour = hour;
+      _changeDateRange();
       _onSelectedChange();
     }
   }
@@ -454,6 +467,19 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     return _currMonth;
   }
 
+  // get the correct minute
+  int? _calcCurrentMinute() {
+    int? _currMinute = this._currMinute!;
+    final minuteRange = _calcMinutesRange();
+    if (_currMinute < minuteRange.last) {
+      _currMinute = max(_currMinute, minuteRange.first);
+    } else {
+      _currMinute = max(minuteRange.last, minuteRange.first);
+    }
+
+    return _currMinute;
+  }
+
   /// change range of month and day
   void _changeDateRange() {
     if (_isChangeDateRange) {
@@ -476,13 +502,21 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
       // day range changed, need limit the value of selected day
       _currDay = max(min(_currDay!, dayRange.last), dayRange.first);
     }
+    final minuteRange = _calcMinutesRange();
+    final minuteRangeChanged = _minuteRange!.first != minuteRange.first;
+    if (minuteRangeChanged) {
+      // minute range changed, need limit the value of selected minute
+      _currMinute = _calcCurrentMinute();
+    }
 
     setState(() {
       _monthRange = monthRange;
       _dayRange = dayRange;
+      _minuteRange = minuteRange;
 
       _valueRangeMap['M'] = monthRange;
       _valueRangeMap['d'] = dayRange;
+      _valueRangeMap['m'] = minuteRange;
     });
 
     if (monthRangeChanged) {
@@ -502,6 +536,17 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         _dayScrollCtrl!.jumpToItem(currDay - dayRange.first);
       } else {
         _dayScrollCtrl!.jumpToItem(dayRange.last - dayRange.first);
+      }
+    }
+
+    if (minuteRangeChanged) {
+      // CupertinoPicker refresh data not working (https://github.com/flutter/flutter/issues/22999)
+      final currMinute = _currMinute!;
+      //
+      if (currMinute < minuteRange.last) {
+        _minuteScrollCtrl!.jumpToItem(currMinute - minuteRange.first);
+      } else {
+        _minuteScrollCtrl!.jumpToItem(minuteRange.last - minuteRange.first);
       }
     }
 
@@ -530,6 +575,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     final dayIndex = _currDay! - _dayRange!.first;
     final hourIndex = _currHour! - _hourRange!.first;
     final minuteIndex = _currMinute! - _minuteRange!.first;
+
     return [yearIndex, monthIndex, dayIndex, hourIndex, minuteIndex];
   }
 
@@ -573,5 +619,18 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
       maxDay = _maxDateTime.day;
     }
     return [minDay, maxDay];
+  }
+
+  List<int> _calcMinutesRange() {
+    if (!isLimitHourAndMinuteSelectionBasedOnFirstDate) {
+      return [0, 59];
+    }
+    var minMinutes = 0;
+    final minHour = _minDateTime.hour;
+    if (minHour == _currHour) {
+      // limit minutes range based on hour
+      minMinutes = _minDateTime.minute;
+    }
+    return [minMinutes, 59];
   }
 }
