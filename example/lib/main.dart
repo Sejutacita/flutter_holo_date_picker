@@ -66,6 +66,10 @@ class MyHomePage extends StatelessWidget {
                           print(test);
                           currentDate = date;
                         },
+                        // firstDate: DateTime.now().subtract(
+                        //   Duration(hours: 3, minutes: 30),
+                        // ),
+                        // isLimitHourAndMinuteSelectionBasedOnFirstDate: true,
                         // dateFormat: 'HH-mm',
                       ),
                       TextButton(

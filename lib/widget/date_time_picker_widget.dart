@@ -27,6 +27,7 @@ class DateTimePickerWidget extends StatefulWidget {
     this.onConfirm,
     this.looping: false,
     this.indicatorBackgroundWidget,
+    this.isLimitHourAndMinuteSelectionBasedOnFirstDate = false,
   }) : super(key: key) {
     final minTime = firstDate ?? DateTime.parse(DATE_PICKER_MIN_DATETIME);
     final maxTime = lastDate ?? DateTime.parse(DATE_PICKER_MAX_DATETIME);
@@ -45,9 +46,19 @@ class DateTimePickerWidget extends StatefulWidget {
   final bool looping;
   final Widget? indicatorBackgroundWidget;
 
+  /// [isLimitHourAndMinuteSelectionBasedOnFirstDate] will limit the hour and
+  /// minute selection based on the first date selected. This is useful when
+  /// you want to restrict the available hours and minutes based on the first
+  /// date.
+  final bool isLimitHourAndMinuteSelectionBasedOnFirstDate;
+
   @override
-  State<StatefulWidget> createState() =>
-      _DateTimePickerWidgetState(this.firstDate, this.lastDate, this.initialDate);
+  State<StatefulWidget> createState() => _DateTimePickerWidgetState(
+        this.firstDate,
+        this.lastDate,
+        this.initialDate,
+        this.isLimitHourAndMinuteSelectionBasedOnFirstDate,
+      );
 }
 
 class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
@@ -81,6 +92,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     DateTime? minDateTime,
     DateTime? maxDateTime,
     DateTime? initialDateTime,
+    bool isLimitHourAndMinuteSelectionBasedOnFirstDate,
   ) {
     // handle current selected year、month、day
     final initDateTime = initialDateTime ?? DateTime.now();
@@ -107,10 +119,14 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     this._currDay = min(max(_dayRange!.first, _currDay!), _dayRange!.last);
 
     // limit the range of hour
-    this._hourRange = [0, 23];
+    this._hourRange = isLimitHourAndMinuteSelectionBasedOnFirstDate
+        ? [_minDateTime.hour, 23]
+        : [0, 23];
 
     // limit the range of minute
-    this._minuteRange = [0, 59];
+    this._minuteRange = isLimitHourAndMinuteSelectionBasedOnFirstDate
+        ? [_minDateTime.minute, 59]
+        : [0, 59];
 
     // create scroll controller
     _yearScrollCtrl = FixedExtentScrollController(
