@@ -169,6 +169,21 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.onChange != null) {
+      final dateTime = DateTime(
+        _currYear!,
+        _currMonth!,
+        _currDay!,
+        _currHour!,
+        _currMinute!,
+      );
+      widget.onChange!(dateTime, _calcSelectIndexList());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
