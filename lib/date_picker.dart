@@ -115,28 +115,28 @@ class DatePicker {
     DateTime? lastDate,
     DateTime? initialDate,
     String? dateFormat,
-    DateTimePickerLocale locale: DATETIME_PICKER_LOCALE_DEFAULT,
-    DateTimePickerMode pickerMode: DateTimePickerMode.date,
+    DateTimePickerLocale locale = DATETIME_PICKER_LOCALE_DEFAULT,
+    DateTimePickerMode pickerMode = DateTimePickerMode.date,
     Color? backgroundColor,
     Color? textColor,
     TextStyle? itemTextStyle,
     String? titleText,
     String? confirmText,
     String? cancelText,
-    bool looping: false,
-    bool reverse: false,
+    bool looping = false,
+    bool reverse = false,
   }) {
     DateTime? _selectedDate = initialDate;
     final List<Widget> listButtonActions = [
       TextButton(
-        style: TextButton.styleFrom(primary: textColor),
+        style: TextButton.styleFrom(foregroundColor: textColor),
         child: Text(confirmText ?? "OK"),
         onPressed: () {
           Navigator.pop(context, _selectedDate);
         },
       ),
       TextButton(
-        style: TextButton.styleFrom(primary: textColor),
+        style: TextButton.styleFrom(foregroundColor: textColor),
         child: Text(cancelText ?? "Cancel"),
         onPressed: () {
           Navigator.pop(context);
